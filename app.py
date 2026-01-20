@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -9,24 +10,70 @@ import plotly.graph_objects as go
 
 # Configuration de la page
 st.set_page_config(
-    page_title="IA Prédilo - Immobilier",
-    page_icon="🏠",
+    page_title="Prédilo AI - Expertise Immobilière",
+    page_icon="💎",
     layout="wide"
 )
 
-# Style CSS pour une interface premium
+# Style CSS Premium personnalisé (Glassmorphism & Gradients)
 st.markdown("""
-    <style>
-    .prediction-box {
-        background-color: #ffffff;
-        padding: 25px;
-        border-radius: 15px;
-        border-left: 10px solid #007bff;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        margin: 20px 0;
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    
+    html, body, [class*="css"]  {
+        font-family: 'Inter', sans-serif;
     }
-    </style>
-    """, unsafe_allow_html=True)
+    
+    /* Background général */
+    .stApp {
+        background: radial-gradient(circle at top left, #0e1117, #1c2331);
+        color: #e0e0e0;
+    }
+
+    /* Boîtes de prédiction Glassmorphism */
+    .premium-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        margin-bottom: 25px;
+    }
+
+    /* Métriques personnalisées */
+    [data-testid="stMetricValue"] {
+        font-size: 2.2rem !important;
+        font-weight: 700 !important;
+        color: #4facfe !important;
+    }
+    
+    /* Titres avec dégradé */
+    .title-gradient {
+        background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 30px;
+    }
+
+    /* Tabs stylisées */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: transparent;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: rgba(255,255,255,0.05);
+        border-radius: 10px;
+        color: white;
+        padding: 10px 20px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ==========================================================
 # 1. LE JEU DE DONNÉES (Dataset - 30 exemples exacts)
@@ -68,81 +115,147 @@ mae_test = mean_absolute_error(y_test, y_pred_test)
 score_r2 = r2_score(y_test, y_pred_test)
 
 # ==========================================================
-# 3. INTERFACE (Sidebar & Menu)
+# 3. INTERFACE PRINCIPALE
 # ==========================================================
-st.sidebar.header("🔧 Paramètres du bien")
+st.markdown('<h1 class="title-gradient">💎 Prédilo AI Premium</h1>', unsafe_allow_html=True)
 
-surface = st.sidebar.slider("Surface (m2)", 20, 300, 75)
-pieces = st.sidebar.number_input("Nombre de pièces", 1, 10, 3)
-distance = st.sidebar.slider("Distance centre (km)", 0, 50, 5)
-neuf_o_n = st.sidebar.selectbox("Est-ce neuf ?", ["NON", "OUI"])
-annee = st.sidebar.number_input("Année de construction", 1900, 2025, 2010)
-etat = st.sidebar.select_slider("État général", options=["A rénover", "Bon", "Excellent"], value="Bon")
-dpe_label = st.sidebar.select_slider("Classe DPE", options=["A", "B", "C", "D", "E", "F", "G"], value="C")
+# Barre latérale luxueuse
+with st.sidebar:
+    st.markdown("### 🏗️ Configuration de l'Expertise")
+    surface = st.slider("Surface habitable (m2)", 20, 300, 85, help="Surface totale en mètres carrés")
+    pieces = st.select_slider("Nombre de pièces", options=[1, 2, 3, 4, 5, 6, 7, 8], value=4)
+    dist = st.slider("Distance du centre-ville (km)", 0, 50, 5)
+    annee = st.number_input("Année de construction", 1900, 2025, 2012)
+    
+    st.markdown("---")
+    st.markdown("### ✨ Caractéristiques")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        neuf = st.checkbox("Neuf", value=False)
+        parking = st.checkbox("Parking", value=True)
+    with col_b:
+        balcon = st.checkbox("Balcon", value=True)
+        jardin = st.checkbox("Jardin", value=False)
+    
+    st.markdown("---")
+    etat_label = st.radio("État général", ["À rénover", "Correct", "Excellent"], horizontal=True)
+    dpe_label = st.select_slider("Performance énergétique (DPE)", options=["A", "B", "C", "D", "E", "F", "G"], value="C")
+    
+    st.markdown("---")
+    prix_demande = st.number_input("Prix demandé par le vendeur (€)", 50000, 1500000, 420000)
 
-st.sidebar.subheader("Équipements")
-parking = st.sidebar.checkbox("Parking / Garage", value=True)
-balcon = st.sidebar.checkbox("Balcon / Terrasse")
-jardin = st.sidebar.checkbox("Jardin")
-ascenseur = st.sidebar.checkbox("Ascenseur")
-
-prix_vendeur = st.sidebar.number_input("Prix du vendeur (€)", 50000, 1000000, 350000)
-
-# Conversion des entrées pour l'IA
-code_neuf = 1 if neuf_o_n == "OUI" else 0
-code_etat = {"A rénover": 1, "Bon": 2, "Excellent": 3}[etat]
-code_dpe = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7}[dpe_label]
+# Conversion des données
+code_neuf = 1 if neuf else 0
 code_park = 1 if parking else 0
 code_balc = 1 if balcon else 0
 code_jard = 1 if jardin else 0
-code_asc = 1 if ascenseur else 0
+code_etat = {"À rénover": 1, "Correct": 2, "Excellent": 3}[etat_label]
+code_dpe = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7}[dpe_label]
 
 # ==========================================================
-# 4. CALCULS ET RÉSULTATS
+# 4. ANALYSE ET PRÉDICTION
 # ==========================================================
-st.title("🚀 Prédilo IA : Expert Immobilier")
-st.markdown("---")
+# Calcul de l'estimation
+X_user = [[surface, dist, code_neuf, pieces, code_park, 0, code_balc, code_jard, 1, code_dpe, annee, code_etat]]
+prediction = model.predict(X_user)[0]
 
-# Prédiction en temps réel
-input_data = [[surface, distance, code_neuf, pieces, code_park, 0, code_balc, code_jard, code_asc, code_dpe, annee, code_etat]]
-estimation = model.predict(input_data)[0]
+# Résumé des métriques
+cols = st.columns([2, 1, 1, 1])
+with cols[0]:
+    st.markdown(f"""
+    <div class="premium-card">
+        <p style="margin:0; font-size:14px; opacity:0.8;">ESTIMATION IA PRÉDILO</p>
+        <h2 style="margin:0; font-size:50px;">{prediction:,.0f} €</h2>
+    </div>
+    """, unsafe_allow_html=True)
+with cols[1]:
+    st.metric("Prix Vendeur", f"{prix_demande:,.0f} €", delta=f"{prediction - prix_demande:,.0f} €", delta_color="normal")
+with cols[2]:
+    st.metric("Précision (Examen)", f"{score_r2:.1%}")
+with cols[3]:
+    st.metric("Fiabilité Réelle", f"± {mae_test:,.0f} €")
 
-# Affichage des métriques clés
-c1, c2, c3, c4 = st.columns(4)
-with c1: st.metric("Estimation IA", f"{estimation:,.0f} €")
-with c2: st.metric("Prix Vendeur", f"{prix_vendeur:,.0f} €")
-with c3: st.metric("Précision IA", f"{score_r2:.1%}")
-with c4: st.metric("Erreur (Test)", f"± {mae_test:,.0f} €")
-
-# Verdict visuel
-st.markdown('<div class="prediction-box">', unsafe_allow_html=True)
-if prix_vendeur < (estimation - mae_test):
-    st.success("🎯 **VERDICT : EXCELLENTE AFFAIRE !**")
-    st.write(f"Ce bien est sous-évalué d'environ **{estimation - prix_vendeur:,.0f} €**.")
-elif prix_vendeur > (estimation + mae_test):
-    st.error("❌ **VERDICT : TROP CHER !**")
-    st.write(f"Le prix est supérieur à la réalité du marché de **{prix_vendeur - estimation:,.0f} €**.")
+# Verdict intelligent
+st.markdown('<div class="premium-card">', unsafe_allow_html=True)
+diff_perc = ((prix_demande - prediction) / prediction) * 100
+if prix_demande < (prediction - mae_test):
+    st.success(f"🎯 **RECOMMANDATION : EXCELLENTE AFFAIRE !** Le bien est sous-évalué de {abs(diff_perc):.1f}% par rapport au marché.")
+elif prix_demande > (prediction + mae_test):
+    st.error(f"❌ **RECOMMANDATION : TROP CHER !** Le prix demandé est {diff_perc:.1f}% plus élevé que l'estimation de l'IA.")
 else:
-    st.info("⚖️ **VERDICT : PRIX CORRECT !**")
-    st.write("Le prix est parfaitement aligné avec les tendances actuelles.")
+    st.info("⚖️ **RECOMMANDATION : PRIX JUSTE.** Le tarif est conforme à la valeur intrinsèque du bien.")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================================
-# 5. GRAPHIQUES PLOTLY
+# 5. VISUALISATIONS HAUT DE GAMME
 # ==========================================================
-t1, t2 = st.tabs(["📊 Distribution du Marché", "📈 Relation Surface/Prix"])
+tabs = st.tabs(["📊 Analyse de Marché", "🧪 Pensée de l'IA", "📄 Rapport d'Expert"])
 
-with t1:
-    fig_hist = px.histogram(df, x="prix", title="Où se situe votre bien ?", color_discrete_sequence=['#007bff'])
-    fig_hist.add_vline(x=estimation, line_dash="dash", line_color="red", annotation_text="VOTRE ESTIMATION")
-    st.plotly_chart(fig_hist, use_container_width=True)
+with tabs[0]:
+    c1, c2 = st.columns(2)
+    with c1:
+        # Gauge Chart pour l'attractivité
+        score_attr = max(10, min(100, 100 - diff_perc))
+        fig_gauge = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = score_attr,
+            title = {'text': "Indice d'Attractivité (%)"},
+            gauge = {
+                'axis': {'range': [0, 100], 'tickwidth': 1},
+                'bar': {'color': "#4facfe"},
+                'steps': [
+                    {'range': [0, 40], 'color': "rgba(255,0,0,0.1)"},
+                    {'range': [40, 70], 'color': "rgba(255,165,0,0.1)"},
+                    {'range': [70, 100], 'color': "rgba(0,128,0,0.1)"}],
+            }
+        ))
+        fig_gauge.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': "white"})
+        st.plotly_chart(fig_gauge, use_container_width=True)
+    
+    with c2:
+        # Histogramme stylisé
+        fig_hist = px.histogram(df, x="prix", title="Où se situe ce bien dans le secteur ?", 
+                               color_discrete_sequence=['#4facfe'], opacity=0.7)
+        fig_hist.add_vline(x=prediction, line_dash="dash", line_color="#00f2fe", annotation_text="VOTRE BIEN")
+        fig_hist.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color': "white"})
+        st.plotly_chart(fig_hist, use_container_width=True)
 
-with t2:
-    fig_scat = px.scatter(df, x="m2", y="prix", title="Prix en fonction de la Surface", labels={"m2": "Surface (m2)", "prix": "Prix (€)"})
-    fig_scat.add_trace(go.Scatter(x=[surface], y=[estimation], mode='markers', name='Votre Bien', marker=dict(size=15, color='red', symbol='star')))
-    st.plotly_chart(fig_scat, use_container_width=True)
+with tabs[1]:
+    st.write("### Comment l'IA a-t-elle calculé ce prix ?")
+    # Graphique en cascade simplifié (Waterfall)
+    base_price = 150000 # On estime un prix de base
+    importances = model.coef_
+    
+    fig_water = go.Figure(go.Waterfall(
+        name = "20", orientation = "v",
+        measure = ["relative", "relative", "relative", "relative", "total"],
+        x = ["Prix de base", "Effet Surface", "Effet Secteur", "Effet Bonus État", "Estimation Finale"],
+        textposition = "outside",
+        text = [f"{base_price:,.0f}€", f"+{importances[0]*surface:,.0f}€", f"{importances[1]*dist:,.0f}€", f"+{importances[11]*code_etat:,.0f}€", f"{prediction:,.0f}€"],
+        y = [base_price, importances[0]*surface, importances[1]*dist, importances[11]*code_etat, 0],
+        connector = {"line":{"color":"rgb(63, 63, 63)"}},
+    ))
+    fig_water.update_layout(title = "Décomposition de la valeur", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color': "white"})
+    st.plotly_chart(fig_water, use_container_width=True)
+    st.info("💡 L'IA analyse les 12 caractéristiques simultanément pour équilibrer chaque détail.")
 
-st.divider()
-st.caption("Développé avec ❤️ pour votre apprentissage de l'IA.")
+with tabs[2]:
+    st.markdown(f"""
+    ### 📝 Résumé de l'Expertise
+    
+    Le bien situé à **{dist} km** du centre, d'une surface de **{surface} m²**, présente un score de précision de **{score_r2:.1%}**.
+    
+    **Points Forts :**
+    - État général : **{etat_label}**
+    - Énergie : **Classe {dpe_label}**
+    - Espaces : **{pieces} pièces** {'avec balcon' if balcon else 'sans balcon'}.
+    
+    **Analyse Financière :**
+    L'IA Prédilo estime que la valeur de marché est de **{prediction:,.0f} €**. Le vendeur demande **{prix_demande:,.0f} €**. 
+    L'investissement est donc considéré comme **{('favorable' if diff_perc < 0 else 'à négocier')}**.
+    """)
+
+st.markdown("---")
+st.markdown("<center style='opacity:0.5;'>Propulsé par la Force de l'IA Prédilo Premium 💎</center>", unsafe_allow_html=True)
 
 

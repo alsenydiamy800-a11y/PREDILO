@@ -182,5 +182,3 @@ with st.expander("ℹ️ À propos du modèle"):
         coef = ia.coef_[i]
         signe = "+" if coef > 0 else "-"
         st.write(f"[{signe}] **{nom}** : {coef:+,.0f} € par unité")
-        signe = "+" if coef > 0 else "-"
-        st.write(f"[{signe}] **{nom}** : {coef:+,.0f} € par unité")
